@@ -43,7 +43,7 @@ model = ROOT.RooAddPdf("model", "(g1+g2)+a", ROOT.RooArgList(bkg, sig), ROOT.Roo
 
 # Generate 1000 events from model so that nsig,nbkg come out to numbers <<500 in fit
 data = model.generate(ROOT.RooArgSet(x), 1000)
-canv = Root.TCanvas("Canvas", "Canvas", 1500, 600)
+canv = ROOT.TCanvas("Canvas", "Canvas", 1500, 600)
 canv.Divide(3,1)
 
 # Fit full range
@@ -60,9 +60,47 @@ model1 = ROOT.RooAddPdf(model)
 r = model1.fitTo(data, ROOT.RooFit.Save())  # ROOT.RooFitResult
 r.Print()
 
-# Plot data on frame and overlay projection of g2
 frame = x.frame(ROOT.RooFit.Title("Full range fitted"))
 data.plotOn(frame)
-g2.plotOn(xframe2)
+model1.plotOn(frame,ROOT.RooFit.VisualizeError(r))
+model1.plotOn(frame)
+model1.paramOn(frame)
+frame.Draw()
+
+# Fit in two regions
+# -------------------------------------------
+
+canv.cd(2)
+x.setRange("left", 0., 4.)
+x.setRange("right", 6., 10.)
+model2 = ROOT.RooAddPdf(model)
+r2 = model2.fitTo(data, ROOT.Roofit.Range("left,right"), ROOT.RooFit.Save())  # ROOT.RooFitResult
+r2.Print()
+frame2 = x.frame(ROOT.Roofit.Title("Fit in left/right sideband"))
+data.plotOn(frame2)
+model2.plotOn(frame2,ROOT.RooFit.VisualizeError(r2))
+model2.plotOn(frame2)
+model2.paramOn(frame2)
+frame2.Draw()
+
+# Fit in one region
+# -------------------------------------------
+# Note how restricting the region to only the left tail increases
+# the fit uncertainty
+
+canv.cd(3)
+x.setRange("leftToMiddle",  0., 5.)
+model3 = ROOT.RooAddPdf(model)
+r3 = model3.fitTo(data, ROOT.RooFit.Range("leftToMiddle"), ROOT.RooFit.Save()) ;
+r3.Print()
+frame3 = x.frame(ROOT.Roofit.Title("Fit from left to middle"))
+data.plotOn(frame3)
+model3.plotOn(frame3, ROOT.RooFit.Visualize(r3))
+model3.plotOn(frame3)
+model3.paramOn(frame3)
+frame3.Draw
+
+canv.Draw()
+
 
 
