@@ -1,0 +1,68 @@
+import ROOT
+# Set up composite pdf
+# --------------------------------------
+
+# Declare observable x
+x = ROOT.RooRealVar("x", "x", 0, 11)
+
+# Create two Gaussian PDFs g1(x,mean1,sigma) anf g2(x,mean2,sigma) and
+# their parameters
+mean = ROOT.RooRealVar("mean", "mean of gaussians", 5)
+sigma1 = ROOT.RooRealVar("sigma1", "width of gaussians", 0.5)
+sigma2 = ROOT.RooRealVar("sigma2", "width of gaussians", 1)
+sig1 = ROOT.RooGaussian("sig1", "Signal component 1", x, mean, sigma1)
+sig2 = ROOT.RooGaussian("sig2", "Signal component 2", x, mean, sigma2)
+
+# Build Chebychev polynomial pdf
+a0 = ROOT.RooRealVar("a0", "a0", 0.5, 0., 1.)
+a1 = ROOT.RooRealVar("a1", "a1", 0.2, 0., 1.)
+bkg = ROOT.RooChebychev("bkg", "Background", x, ROOT.RooArgList(a0, a1))
+
+# Sum the signal components into a composite signal pdf
+sig1frac = ROOT.RooRealVar(
+    "sig1frac", "fraction of component 1 in signal", 0.8, 0., 1.)
+sig = ROOT.RooAddPdf(
+    "sig", "Signal", ROOT.RooArgList(sig1, sig2), ROOT.RooArgList(sig1frac))
+
+# E x t e n d   t h e   p d f s
+# -----------------------------
+
+# Define signal range in which events counts are to be defined
+x.setRange("signalRange",4,6)
+nsig = ROOT.RooRealVar("nsig", "number of signal events in signalRange", 500, 0., 10000)
+nbkg = ROOT.RooRealVar("nbkg", "number of background events in signalRange", 500, 0, 10000)
+
+
+# Use AddPdf to extend the model. Giving as many coefficients as pdfs switches
+# on extension.
+model = ROOT.RooAddPdf("model", "(g1+g2)+a", ROOT.RooArgList(bkg, sig), ROOT.RooArgList(nbkg, nsig))
+
+
+# S a m p l e   d a t a ,   f i t   m o d e l
+# ------------------------------------------------------------------------------
+
+# Generate 1000 events from model so that nsig,nbkg come out to numbers <<500 in fit
+data = model.generate(ROOT.RooArgSet(x), 1000)
+canv = Root.TCanvas("Canvas", "Canvas", 1500, 600)
+canv.Divide(3,1)
+
+# Fit full range
+# ------------------------------------------------------------------------------
+canv.cd(1)
+
+# Perform unbinned ML fit to data, full range
+
+# IMPORTANT:
+# The model needs to be copied when fitting with different ranges because
+# the interpretation of the coefficients is tied to the fit range
+# that's used in the first fit
+model1 = ROOT.RooAddPdf(model)
+r = model1.fitTo(data, ROOT.RooFit.Save())  # ROOT.RooFitResult
+r.Print()
+
+# Plot data on frame and overlay projection of g2
+frame = x.frame(ROOT.RooFit.Title("Full range fitted"))
+data.plotOn(frame)
+g2.plotOn(xframe2)
+
+
