@@ -70,7 +70,7 @@ def pythonize_rooabs(klass, name):
         # Add pythonization of `fitTo` function
         klass._OriginalFitTo = klass.fitTo
         klass.fitTo = _fitTo
-    if name == 'RooAbsReal':
+    else:
         klass._OriginalPlotOn = klass.plotOn
         klass.plotOn = _plotOn
 
